@@ -1,4 +1,4 @@
-import cors from "cors";
+import cors, { type CorsOptions } from "cors";
 import express from "express";
 import helmet from "helmet";
 import { attachAuth } from "./middleware/auth.js";
@@ -7,8 +7,37 @@ import { apiRouter } from "./routes/index.js";
 
 export const app = express();
 
+const configuredOrigins = (process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+const defaultOrigins = [
+  "http://localhost:3000",
+  "https://thermal-guilt-web.vercel.app"
+];
+
+const allowedOrigins = configuredOrigins.length ? configuredOrigins : defaultOrigins;
+
+function isAllowedOrigin(origin: string) {
+  if (allowedOrigins.includes(origin)) return true;
+  if (origin.endsWith(".vercel.app") && origin.includes("thermal-guilt-web")) return true;
+  return false;
+}
+
 app.use(helmet());
-app.use(cors());
+const corsOptions: CorsOptions = {
+  origin(origin, callback) {
+    if (!origin) return callback(null, true);
+    if (isAllowedOrigin(origin)) return callback(null, true);
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(express.json({ limit: "2mb" }));
 app.use(attachAuth);
 
