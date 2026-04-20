@@ -1,0 +1,29 @@
+{
+  "name": "thermal-guilt",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace @thermal-guilt/web run dev",
+    "dev:api": "npm --workspace @thermal-guilt/api run dev",
+    "dev": "concurrently \"npm run dev:web\" \"npm run dev:api\"",
+    "build": "npm --workspace @thermal-guilt/shared run build && npm --workspace @thermal-guilt/api run build && npm --workspace @thermal-guilt/web run build",
+    "lint": "npm --workspace @thermal-guilt/web run lint",
+    "test": "npm --workspace @thermal-guilt/shared run test && npm --workspace @thermal-guilt/api run test:integration"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/cookiejar": "^2.1.5",
+    "@types/methods": "^1.1.4",
+    "@types/superagent": "^8.1.9",
+    "@types/supertest": "^7.2.0",
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3"
+  }
+}
