@@ -4,6 +4,14 @@ Thermal Guilt is a gamified smart energy app that makes HVAC waste visible, comp
 
 Your household becomes a thermal ghost. If your usage spikes above neighborhood behavior, your ghost shifts toward red and your rank drops. Stay efficient and claim `$COOL` tokens on Solana Devnet.
 
+**Token Mint on Soalana Devnet:** [https://explorer.solana.com/address/2eUWsE8N7qYT6zscWgXKzuxjrKVBtmm8bAMsaWbDFpP4?cluster=devnet](https://explorer.solana.com/address/2eUWsE8N7qYT6zscWgXKzuxjrKVBtmm8bAMsaWbDFpP4?cluster=devnet)
+**Youtube Video Demo: **[https://youtu.be/4x_Ru52HSSk](https://youtu.be/4x_Ru52HSSk)
+
+### Screenshot
+
+<img width="1516" height="1177" alt="screencapture-thermal-guilt-web-vercel-app-2026-04-20-11_20_45" src="https://github.com/user-attachments/assets/07c163fb-a04a-4c30-b898-06826e80282c" />
+
+
 ## Highlights
 - Competitive HVAC dashboard with score, leaderboard, streak framing, and AI coaching.
 - Real wallet flow (Phantom + Backpack) with wallet-signed claim transactions.
@@ -29,9 +37,6 @@ packages/
 infra/
   snowflake/           # SQL schemas and tasks
   solana/              # Anchor program skeleton
-docs/
-  TECHNICAL_BLOG.md
-  social/
 ```
 
 ## Architecture
