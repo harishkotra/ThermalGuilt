@@ -12,14 +12,29 @@ export const aiRouter = Router();
 
 aiRouter.post("/chat", asyncHandler(async (req, res) => {
   const user = req.authUser!;
-  const { message } = req.body as { message: string };
-  const stats = await fetchNeighborhoodStats(user.neighborhoodId);
-  const currentKwh = generateCurrentUsage(user.userId);
-  const score = Math.max(0, Math.min(100, Math.round(100 - ((currentKwh - stats.avgEnergyKwh) / stats.stdDevEnergy) * 15)));
-  const ghostType = score < 25 ? "Inferno" : score < 50 ? "Thermal Vampire" : score < 75 ? "Warm Hug" : score < 95 ? "Cool Cat" : "Ice Queen";
+  const { message } = req.body as { message?: string };
 
-  const response = await chatWithThermalCoach({ userId: user.userId, message, score, ghostType });
-  res.json(response);
+  try {
+    const stats = await fetchNeighborhoodStats(user.neighborhoodId);
+    const currentKwh = generateCurrentUsage(user.userId);
+    const score = Math.max(0, Math.min(100, Math.round(100 - ((currentKwh - stats.avgEnergyKwh) / stats.stdDevEnergy) * 15)));
+    const ghostType = score < 25 ? "Inferno" : score < 50 ? "Thermal Vampire" : score < 75 ? "Warm Hug" : score < 95 ? "Cool Cat" : "Ice Queen";
+
+    const response = await chatWithThermalCoach({
+      userId: user.userId,
+      message: message || "Give me a quick thermal coaching tip.",
+      score,
+      ghostType
+    });
+    res.json(response);
+  } catch {
+    res.json({
+      assistant: "ThermalCoach",
+      roastLevel: "gentle",
+      reply: "Coach services are temporarily degraded. Quick win: raise setpoint by 1°F during peak hours (3pm-7pm).",
+      memoryFacts: []
+    });
+  }
 }));
 
 aiRouter.get("/ghost-analysis", asyncHandler(async (req, res) => {
