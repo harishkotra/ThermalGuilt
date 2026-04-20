@@ -1,7 +1,12 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
+export function getApiBaseUrl() {
+  if (typeof window === "undefined") {
+    return process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
+  }
+  return process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
+}
 
 export async function apiGet<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, { cache: "no-store" });
+  const response = await fetch(`${getApiBaseUrl()}${path}`, { cache: "no-store" });
   if (!response.ok) {
     const text = await response.text();
     throw new Error(`GET ${path} failed: ${text}`);
@@ -10,7 +15,7 @@ export async function apiGet<T>(path: string): Promise<T> {
 }
 
 export async function apiPost<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetch(`${getApiBaseUrl()}${path}`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body)

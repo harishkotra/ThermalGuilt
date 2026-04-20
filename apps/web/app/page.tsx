@@ -1,4 +1,4 @@
-import { apiGet } from "../lib/api";
+import { apiGet, getApiBaseUrl } from "../lib/api";
 import { CoachCard } from "../components/coach-card";
 import { GhostCard } from "../components/ghost-card";
 import { GhostMap } from "../components/ghost-map";
@@ -25,6 +25,7 @@ type Leaderboard = {
 
 export default async function DashboardPage() {
   let apiOffline = false;
+  const apiBase = getApiBaseUrl();
   let energy: CurrentEnergy = {
     summary: { score: 50, ghostType: "Warm Hug", zScore: 0, shameRed: false }
   };
@@ -61,11 +62,11 @@ export default async function DashboardPage() {
             <p className="mt-2 text-sm text-slate-300">
               Make energy waste embarrassing. Make efficiency profitable.
             </p>
-            {apiOffline ? (
-              <p className="mt-3 text-xs text-amber-300">
-                API is offline (`localhost:3001`). Showing fallback demo data.
-              </p>
-            ) : null}
+        {apiOffline ? (
+          <p className="mt-3 text-xs text-amber-300">
+                API is offline ({apiBase}). Showing fallback demo data.
+          </p>
+        ) : null}
           </div>
           <div className="space-y-1 text-xs text-slate-300">
             <p>
