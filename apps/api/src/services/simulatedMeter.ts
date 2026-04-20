@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { EnergyReading } from "@thermal-guilt/shared";
+import type { EnergyReading } from "../domain.js";
 
 const users = ["u_alex", "u_jo", "u_sam", "u_taylor", "u_casey"];
 

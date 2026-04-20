@@ -45,6 +45,10 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok", service: "thermal-guilt-api", timestamp: new Date().toISOString() });
 });
 
+app.get("/api/health", (_req, res) => {
+  res.json({ status: "ok", service: "thermal-guilt-api", timestamp: new Date().toISOString() });
+});
+
 app.use("/auth", authRouter);
 app.use("/api", apiRouter);
 

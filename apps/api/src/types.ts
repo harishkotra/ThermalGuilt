@@ -1,4 +1,4 @@
-import type { GhostType } from "@thermal-guilt/shared";
+import type { GhostType } from "./domain.js";
 
 export type AuthUser = {
   userId: string;

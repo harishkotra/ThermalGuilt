@@ -17,7 +17,7 @@ import {
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID
 } from "@solana/spl-token";
-import { scoreToTokenReward } from "@thermal-guilt/shared";
+import { scoreToTokenReward } from "../domain.js";
 import { config } from "../config.js";
 
 const connection = new Connection(config.solana.rpcUrl, "confirmed");

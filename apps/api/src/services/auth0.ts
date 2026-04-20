@@ -17,9 +17,24 @@ const demoUser: AuthUser = {
   walletAddress: "DemoWallet11111111111111111111111111111111"
 };
 
-const JWKS = config.auth0.domain
-  ? createRemoteJWKSet(new URL(`https://${config.auth0.domain}/.well-known/jwks.json`))
-  : null;
+function normalizeAuth0Domain(raw: string) {
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  return trimmed
+    .replace(/^https?:\/\//i, "")
+    .replace(/\/+$/, "");
+}
+
+const auth0Domain = normalizeAuth0Domain(config.auth0.domain);
+
+let JWKS: ReturnType<typeof createRemoteJWKSet> | null = null;
+if (auth0Domain) {
+  try {
+    JWKS = createRemoteJWKSet(new URL(`https://${auth0Domain}/.well-known/jwks.json`));
+  } catch {
+    JWKS = null;
+  }
+}
 
 function readUserFromClaims(payload: Record<string, unknown>): AuthUser {
   const ns = config.auth0.namespace;
@@ -62,7 +77,7 @@ export async function getAuthContext(req: Request): Promise<AuthContext> {
   }
 
   const { payload } = await jwtVerify(token, JWKS, {
-    issuer: `https://${config.auth0.domain}/`,
+    issuer: `https://${auth0Domain}/`,
     audience: config.auth0.audience
   });
 
@@ -79,11 +94,11 @@ export async function hasScope(req: Request, requiredScope: string) {
 }
 
 async function getM2MToken() {
-  if (!config.auth0.agentClientId || !config.auth0.agentClientSecret || !config.auth0.domain) {
+  if (!config.auth0.agentClientId || !config.auth0.agentClientSecret || !auth0Domain) {
     throw new Error("Auth0 M2M credentials are not configured");
   }
 
-  const response = await fetch(`https://${config.auth0.domain}/oauth/token`, {
+  const response = await fetch(`https://${auth0Domain}/oauth/token`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
@@ -104,7 +119,7 @@ async function getM2MToken() {
 }
 
 export async function requestCibaApproval(userId: string, action: string) {
-  if (config.testMode || !config.auth0.domain || !config.auth0.clientId || !config.auth0.clientSecret) {
+  if (config.testMode || !auth0Domain || !config.auth0.clientId || !config.auth0.clientSecret) {
     return {
       approvalId: `ciba_${Date.now()}`,
       userId,
@@ -115,7 +130,7 @@ export async function requestCibaApproval(userId: string, action: string) {
   }
 
   const token = await getM2MToken();
-  const response = await fetch(`https://${config.auth0.domain}/bc-authorize`, {
+  const response = await fetch(`https://${auth0Domain}/bc-authorize`, {
     method: "POST",
     headers: {
       "content-type": "application/x-www-form-urlencoded",

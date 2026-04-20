@@ -1,5 +1,5 @@
 import snowflake from "snowflake-sdk";
-import type { EnergyReading } from "@thermal-guilt/shared";
+import type { EnergyReading } from "../domain.js";
 import { config } from "../config.js";
 import { generateHourlyHistory, generateNeighborhoodSnapshot } from "./simulatedMeter.js";
 

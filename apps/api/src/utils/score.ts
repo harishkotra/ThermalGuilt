@@ -1,4 +1,4 @@
-import { classifyGhost, computeZScore, isShameRed } from "@thermal-guilt/shared";
+import { classifyGhost, computeZScore, isShameRed } from "../domain.js";
 import type { EnergySummary } from "../types.js";
 
 export function buildEnergySummary(currentKwh: number, mean: number, stdDev: number): EnergySummary {
