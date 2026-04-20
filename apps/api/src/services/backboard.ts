@@ -31,73 +31,81 @@ async function backboardRequest<T>(path: string, body: object): Promise<T> {
 }
 
 export async function chatWithThermalCoach(input: ChatInput) {
-  if (!config.backboard.apiKey || config.testMode) {
-    const roastLevel = input.score < 50 ? "high" : "gentle";
-    const response = input.score < 50
+  const localFallback = {
+    assistant: "ThermalCoach",
+    roastLevel: input.score < 50 ? "high" : "gentle",
+    reply: input.score < 50
       ? `Your ghost is flashing ${input.ghostType} territory. Drop thermostat cycling and pre-cool before peak hours.`
-      : `Nice work. You're holding ${input.ghostType} form. Keep it steady and stack streak days for COOL rewards.`;
+      : `Nice work. You're holding ${input.ghostType} form. Keep it steady and stack streak days for COOL rewards.`,
+    memoryFacts: ["User prefers 72F weekdays", "Works from home Wednesdays"]
+  };
+
+  if (!config.backboard.apiKey || config.testMode) {
+    return localFallback;
+  }
+
+  try {
+    const data = await backboardRequest<{ output?: { text?: string }; memory?: string[] }>(
+      `/assistants/${config.backboard.assistantId}/chat`,
+      {
+        thread: { user_id: input.userId },
+        messages: [{ role: "user", content: input.message }],
+        metadata: {
+          score: input.score,
+          ghostType: input.ghostType
+        }
+      }
+    );
 
     return {
       assistant: "ThermalCoach",
-      roastLevel,
-      reply: response,
-      memoryFacts: ["User prefers 72F weekdays", "Works from home Wednesdays"]
+      roastLevel: input.score < 50 ? "high" : "gentle",
+      reply: data.output?.text || localFallback.reply,
+      memoryFacts: data.memory || []
     };
+  } catch {
+    return localFallback;
   }
-
-  const data = await backboardRequest<{ output?: { text?: string }; memory?: string[] }>(
-    `/assistants/${config.backboard.assistantId}/chat`,
-    {
-      thread: { user_id: input.userId },
-      messages: [{ role: "user", content: input.message }],
-      metadata: {
-        score: input.score,
-        ghostType: input.ghostType
-      }
-    }
-  );
-
-  return {
-    assistant: "ThermalCoach",
-    roastLevel: input.score < 50 ? "high" : "gentle",
-    reply: data.output?.text || "ThermalCoach could not produce a response.",
-    memoryFacts: data.memory || []
-  };
 }
 
 export async function generateGhostAnalysis(currentKwh: number, neighborhoodMean: number, stdDev: number) {
   const summary = buildEnergySummary(currentKwh, neighborhoodMean, stdDev);
 
+  const localFallback = {
+    summary,
+    narrative: `You're a ${summary.shameRed ? "Thermal Vampire" : summary.ghostType}. Current load sits at ${summary.zScore.toFixed(2)}σ vs neighborhood baseline.`,
+    tips: [
+      "Shift cooling 30 minutes earlier to avoid peak-hour compressor bursts.",
+      "Increase setpoint by 1°F from 3pm-7pm.",
+      "Replace filter if AC cycle interval is under 10 minutes."
+    ]
+  };
+
   if (!config.backboard.apiKey || config.testMode) {
-    const descriptor = summary.shameRed ? "Thermal Vampire" : summary.ghostType;
-    return {
-      summary,
-      narrative: `You're a ${descriptor}. Current load sits at ${summary.zScore.toFixed(2)}σ vs neighborhood baseline.`,
-      tips: [
-        "Shift cooling 30 minutes earlier to avoid peak-hour compressor bursts.",
-        "Increase setpoint by 1°F from 3pm-7pm.",
-        "Replace filter if AC cycle interval is under 10 minutes."
-      ]
-    };
+    return localFallback;
   }
 
-  const data = await backboardRequest<{ output?: { text?: string }; tips?: string[] }>(
-    `/assistants/${config.backboard.assistantId}/run`,
-    {
-      inputs: {
-        currentKwh,
-        neighborhoodMean,
-        stdDev,
-        zScore: summary.zScore,
-        ghostType: summary.ghostType
-      },
-      instruction: "Generate thermal ghost narrative and three concrete HVAC optimization tips."
-    }
-  );
+  try {
+    const data = await backboardRequest<{ output?: { text?: string }; tips?: string[] }>(
+      `/assistants/${config.backboard.assistantId}/run`,
+      {
+        inputs: {
+          currentKwh,
+          neighborhoodMean,
+          stdDev,
+          zScore: summary.zScore,
+          ghostType: summary.ghostType
+        },
+        instruction: "Generate thermal ghost narrative and three concrete HVAC optimization tips."
+      }
+    );
 
-  return {
-    summary,
-    narrative: data.output?.text || "Thermal profile generated.",
-    tips: data.tips || []
-  };
+    return {
+      summary,
+      narrative: data.output?.text || localFallback.narrative,
+      tips: data.tips || localFallback.tips
+    };
+  } catch {
+    return localFallback;
+  }
 }

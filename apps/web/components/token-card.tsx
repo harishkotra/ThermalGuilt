@@ -46,20 +46,33 @@ export function TokenCard({ score }: { score: number }) {
     setStatus("Building devnet claim transaction...");
 
     try {
-      const txPayload = await apiPost<ClaimTx>("/api/solana/claim/transaction", { walletAddress, score });
-      const tx = Transaction.from(Buffer.from(txPayload.serializedTransaction, "base64"));
-      const signed = await wallet.signTransaction(tx);
-      const signedB64 = signed.serialize().toString("base64");
+      const submitOnce = async () => {
+        const txPayload = await apiPost<ClaimTx>("/api/solana/claim/transaction", { walletAddress, score });
+        const tx = Transaction.from(Buffer.from(txPayload.serializedTransaction, "base64"));
+        const signed = await wallet.signTransaction!(tx);
+        const signedB64 = signed.serialize().toString("base64");
 
-      setStatus("Submitting signed transaction...");
-      const { signature } = await apiPost<{ signature: string }>("/api/solana/claim/submit", {
-        signedTransaction: signedB64
-      });
+        setStatus("Submitting signed transaction...");
+        const { signature } = await apiPost<{ signature: string }>("/api/solana/claim/submit", {
+          signedTransaction: signedB64
+        });
 
-      await connection.confirmTransaction(signature, "confirmed");
-      const refreshed = await apiGet<Balance>(`/api/solana/balance/${walletAddress}`);
-      setBalance(refreshed.balance);
-      setStatus(`Claimed ${txPayload.reward} COOL on devnet. Tx: ${signature.slice(0, 12)}...`);
+        await connection.confirmTransaction(signature, "confirmed");
+        const refreshed = await apiGet<Balance>(`/api/solana/balance/${walletAddress}`);
+        setBalance(refreshed.balance);
+        setStatus(`Claimed ${txPayload.reward} COOL on devnet. Tx: ${signature.slice(0, 12)}...`);
+      };
+
+      try {
+        await submitOnce();
+      } catch (error) {
+        const message = (error as Error).message || "";
+        const retryable = message.includes("BLOCKHASH_EXPIRED") || message.includes("Blockhash not found");
+        if (!retryable) throw error;
+
+        setStatus("Blockhash expired. Rebuilding transaction...");
+        await submitOnce();
+      }
     } catch (error) {
       setStatus(`Claim failed: ${(error as Error).message}`);
     } finally {
